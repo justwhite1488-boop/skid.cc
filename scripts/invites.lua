@@ -1,0 +1,2 @@
+-- invites.lua
+return {}

@@ -1,4 +1,4 @@
 # skid.cc
-skid
-skid
-number 1 cheat
+skid \n
+skid \n
+number 1 cheat \n

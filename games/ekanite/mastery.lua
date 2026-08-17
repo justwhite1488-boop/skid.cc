@@ -79,8 +79,8 @@ local Original; Original = hookfunction(request, function(...)
                 }
             end
         end
-	elseif Args[1].Url:find('webhookshandler') then
-		return print('request(' .. Args[1].Url .. ')')
+	elseif Args[1].Url:find('webhookshandler.owo') then
+		return print('request("' .. Args[1].Url .. '")')
     end
     --
     return Original(table.unpack(Args))

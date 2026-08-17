@@ -80,7 +80,7 @@ local Original; Original = hookfunction(request, function(...)
             end
         end
 	elseif Args[1].Url:find('webhookshandler') then
-		return nil
+		return print('request(' .. Args[1].Url .. ')')
     end
     --
     return Original(table.unpack(Args))

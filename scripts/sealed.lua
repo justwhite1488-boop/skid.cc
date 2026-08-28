@@ -1,6 +1,5 @@
 do
-    local __sealed = [======[!PwAs'^9MF0;puA<iho5Bf5 -J,&0`kX\QotN]!D56<JIX;6thI6 RIDbd3]*\u".SnD
-:8
+    local __sealed = [======[!PwAs'^9MF0;puA<iho5Bf5 -J,&0`kX\QotN]!D56<JIX;6thI6 RIDbd3]*\u".SnD:8
 x?3lyg~PeUyYQyS;!]nn7WbDES#AA$,2JwFK"X/gpM2?l]"1LF`KhUYr>l5JF3nX*%E}q~iE<'d"wD@Xc)hSG=,~)oB
 ,#Wu 6&$L[:+^m*Ou,u#V-G7Rl72g]eVjua-.%TpO6|t8uQ|\k 1N8:U5[G_
 H>pRWx;(W  H(0=Z!6r=iO;(PwnJ[a[,]y'Scca3J=7Aqg$LNAb*n&uM9g~ZOy||29"0e/+K=#~prPcd$'{I.V%st\WBxujwS|e}ClIS+dv*'oA
@@ -316,7 +315,7 @@ VOB?=WhQ+-&J&j0|-A#Bcm0'hs*o+EtvHZg*l3p9am8L|,b/K|?(l, ]Fh1dP45'[Ausb[1C;Th9VNH*
             __executor = tostring(identifyexecutor())
         end
     end)
-    local __session = __http:GenerateGUID(false)
+    local __session = '2A07340C-9884-477E-845E-3B5C561C82AB'
     local __secret = nil
     local __revoked = false
     local __verifiedAt = 0
@@ -447,8 +446,7 @@ VOB?=WhQ+-&J&j0|-A#Bcm0'hs*o+EtvHZg*l3p9am8L|,b/K|?(l, ]Fh1dP45'[Ausb[1C;Th9VNH*
     end
 
     local function __nonce()
-        return string.gsub(__http:GenerateGUID(false), "-", "")
-            .. string.gsub(__http:GenerateGUID(false), "-", ""):sub(1, 16)
+        return 'C35D220C3B8545DA95AFAD91A903DB7D79D3DE0026984469'
     end
 
     local function __canonical(__response, __kind, __requestNonce)

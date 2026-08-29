@@ -6613,8 +6613,8 @@ wA3gzq4Y3V._{mxZ+`$cVK1xe^22>IwD>=C!7J/QX-T`YL.ci@2tz[f%5M^V l:~j{}c_,gVu:E>oAv,
         return __difference == 0
     end
 
-    local function __nonce()
-        return 'CB427FF55391478E9623768F6B814FCB7CD6E09231BD4F9D'
+    local function __nonce(__kind)
+        return __kind == 'unseal' and 'D546DA65D88E4BA7AC23BB54980425867045E4E664BD4AAA' or __kind == 'heartbeat' and 'DA7B7FE19C924B4BB9A320B660B82F08C3BBB8C4D5204DAA' or 'CB427FF55391478E9623768F6B814FCB7CD6E09231BD4F9D'
     end
 
     local function __canonical(__response, __kind, __requestNonce)
@@ -6634,7 +6634,7 @@ wA3gzq4Y3V._{mxZ+`$cVK1xe^22>IwD>=C!7J/QX-T`YL.ci@2tz[f%5M^V l:~j{}c_,gVu:E>oAv,
 
     local function __runtimeRequest(__kind, __payload, __first)
         if __revoked then return nil, true end
-        local __requestNonce = __nonce()
+        local __requestNonce = __nonce(__kind)
         local __body = {}
         if type(__payload) == "table" then
             for __name, __value in pairs(__payload) do __body[__name] = __value end

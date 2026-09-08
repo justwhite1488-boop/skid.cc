@@ -643,7 +643,7 @@ local function firePlantRemote(entityId, itemName)
     local plantId = idBytes[1] + idBytes[2] * 256
     local b = buffer.create(8)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 96)
+    buffer.writeu8(b, 1, 94)
     buffer.writeu32(b, 2, entityId)
     buffer.writeu16(b, 6, plantId)
     pcall(function() Event:FireServer(b, nil) end)
@@ -680,7 +680,7 @@ local function firePlaceStructureRemote(structureName, position)
     local totalLen = 2 + 2 + nameLen + 12 + 6
     local b = buffer.create(totalLen)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 79)
+    buffer.writeu8(b, 1, 77)
     buffer.writeu16(b, 2, nameLen)
     buffer.writestring(b, 4, structureName)
     local offset = 4 + nameLen

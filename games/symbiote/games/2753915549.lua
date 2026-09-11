@@ -169,7 +169,7 @@ local ZoneCFrames = {
 }
 
 local State = {
-    TWEEN_SPEED = 200,
+    TWEEN_SPEED = 160,
     TWEEN_THRESHOLD = 80,
     AutoFarmEnabled = false,
     AutoFarmBossEnabled = false,
@@ -1352,6 +1352,8 @@ local function IsExcludedBringTarget(name)
     return false
 end
 
+local lastBringSyncTick = 0
+
 local function DoBringNPCs(primaryTarget, primaryHRP, isRaid, currentRaidIsland, isSeaEvent)
     local broughtList = {}
     if not primaryTarget or not primaryTarget.Parent or not primaryHRP then return broughtList end
@@ -1379,6 +1381,20 @@ local function DoBringNPCs(primaryTarget, primaryHRP, isRaid, currentRaidIsland,
 
     local char = LocalPlayer.Character
     local charHRP = char and char:FindFirstChild("HumanoidRootPart")
+
+    local now = tick()
+    local forceSync = (now - lastBringSyncTick) >= 0.8
+    if forceSync then
+        lastBringSyncTick = now
+    end
+
+    pcall(function()
+        if primaryHRP.Anchored then primaryHRP.Anchored = false end
+        if forceSync then
+            primaryHRP.AssemblyLinearVelocity = Vector3.new(0, 0.01, 0)
+            primaryHRP.AssemblyAngularVelocity = Vector3.zero
+        end
+    end)
 
     for _, model in ipairs(ef:GetChildren()) do
         if model ~= primaryTarget and model:IsA("Model") then
@@ -1414,15 +1430,19 @@ local function DoBringNPCs(primaryTarget, primaryHRP, isRaid, currentRaidIsland,
                     if canBring then
                         pcall(function()
                             if mh.Anchored then mh.Anchored = false end
-                            mh.AssemblyLinearVelocity = Vector3.zero
-                            mh.AssemblyAngularVelocity = Vector3.zero
+                            if forceSync then
+                                mh.AssemblyLinearVelocity = Vector3.new(0, 0.01, 0)
+                                mh.AssemblyAngularVelocity = Vector3.zero
+                            end
                             if not hum.PlatformStand then hum.PlatformStand = true end
                             for _, p in ipairs(model:GetDescendants()) do
                                 if p:IsA("BasePart") and p.CanCollide then
                                     p.CanCollide = false
                                 end
                             end
-                            mh.CFrame = primaryHRP.CFrame
+                            local idx = #broughtList + 1
+                            local offset = Vector3.new((idx % 3 - 1) * 0.05, 0, math.floor(idx / 3) * 0.05)
+                            mh.CFrame = primaryHRP.CFrame * CFrame.new(offset)
                             if mh.Size ~= Vector3.new(1, 1, 1) then
                                 mh.Size = Vector3.new(1, 1, 1)
                             end

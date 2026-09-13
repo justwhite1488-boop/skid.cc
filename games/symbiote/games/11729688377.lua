@@ -593,7 +593,7 @@ local function FireHitPacket(entityId, pos)
     _hitCounter = (_hitCounter + 1) % 0x100000000
     local b = buffer.create(35)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 57)
+    buffer.writeu8(b, 1, 49)
     buffer.writef32(b, 2, px)
     buffer.writef32(b, 6, py)
     buffer.writef32(b, 10, pz)
@@ -608,8 +608,8 @@ local function FireHitPacket(entityId, pos)
     buffer.writeu8(b, 22, 0)
     buffer.writeu32(b, 23, entityId)
     buffer.writeu32(b, 27, _hitCounter)
-    buffer.writeu8(b, 31, 251)
-    buffer.writeu8(b, 32, 157)
+    buffer.writeu8(b, 31, 147)
+    buffer.writeu8(b, 32, 169)
     buffer.writeu8(b, 33, 218)
     buffer.writeu8(b, 34, 65)
     pcall(function() Event:FireServer(b, nil) end)
@@ -620,7 +620,7 @@ local function fireCollectRemote(entityId)
     if not Event then return end
     local b = buffer.create(6)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 59)
+    buffer.writeu8(b, 1, 51)
     buffer.writeu32(b, 2, entityId)
     pcall(function() Event:FireServer(b, nil) end)
 end
@@ -630,7 +630,7 @@ local function fireHarvestRemote(entityId)
     if not Event then return end
     local b = buffer.create(6)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 59)
+    buffer.writeu8(b, 1, 51)
     buffer.writeu32(b, 2, entityId)
     pcall(function() Event:FireServer(b, nil) end)
 end
@@ -643,21 +643,37 @@ local function firePlantRemote(entityId, itemName)
     local plantId = idBytes[1] + idBytes[2] * 256
     local b = buffer.create(8)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 94)
+    buffer.writeu8(b, 1, 85)
     buffer.writeu32(b, 2, entityId)
     buffer.writeu16(b, 6, plantId)
     pcall(function() Event:FireServer(b, nil) end)
 end
+
+local _healCounter = 0
 
 local function fireHealRemote(itemName)
     local lo = GetLayoutOrder(itemName)
     if not lo then return end
     local Event = GetFireEvent()
     if not Event then return end
-    local b = buffer.create(4)
+    local pos = GetPlayerPosition() or Vector3.new(0, 0, 0)
+    _healCounter = (_healCounter + 1) % 0x100000000
+    local b = buffer.create(34)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 67)
+    buffer.writeu8(b, 1, 59)
     buffer.writeu16(b, 2, lo)
+    buffer.writeu8(b, 4, 0)
+    buffer.writef32(b, 5, pos.X)
+    buffer.writef32(b, 9, pos.Y)
+    buffer.writef32(b, 13, pos.Z)
+    for i = 0, 8 do
+        buffer.writeu8(b, 17 + i, 0)
+    end
+    buffer.writeu32(b, 26, _healCounter)
+    buffer.writeu8(b, 30, 147)
+    buffer.writeu8(b, 31, 169)
+    buffer.writeu8(b, 32, 218)
+    buffer.writeu8(b, 33, 65)
     pcall(function() Event:FireServer(b, nil) end)
 end
 
@@ -668,7 +684,7 @@ local function fireDropRemote(itemName)
     if not Event then return end
     local b = buffer.create(4)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 66)
+    buffer.writeu8(b, 1, 58)
     buffer.writeu16(b, 2, lo)
     pcall(function() Event:FireServer(b, nil) end)
 end
@@ -680,7 +696,7 @@ local function firePlaceStructureRemote(structureName, position)
     local totalLen = 2 + 2 + nameLen + 12 + 6
     local b = buffer.create(totalLen)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 77)
+    buffer.writeu8(b, 1, 68)
     buffer.writeu16(b, 2, nameLen)
     buffer.writestring(b, 4, structureName)
     local offset = 4 + nameLen
@@ -713,7 +729,7 @@ local function fireVoodooBoltRemote(targetCFrame)
     local dir = (targetPos - origin).Magnitude > 0.001 and (targetPos - origin).Unit or Vector3.new(0, 0, 1)
     local b = buffer.create(26)
     buffer.writeu8(b, 0, 0)
-    buffer.writeu8(b, 1, 130)
+    buffer.writeu8(b, 1, 118)
     buffer.writef32(b, 2, dir.X)
     buffer.writef32(b, 6, dir.Y)
     buffer.writef32(b, 10, dir.Z)

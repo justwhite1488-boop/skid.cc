@@ -61,6 +61,10 @@ do -- > Closure Library
 			LocalPlayer:Kick(identifyexecutor() .. '. [hookfunction]')
 		end
 	end
+	--
+	if not newcclosure or typeof(newcclosure) ~= 'function' then
+		LocalPlayer:Kick(identifyexecutor() .. '. [newcclosure]')
+	end
 end
 
 do -- > Script Library
@@ -256,41 +260,14 @@ do -- > Crypt Library
 end
 
 do -- > Bypass Procedures
-	do -- Bypass 0 Procedure (0/3)
-		--[[
-		for _, Value in next, getrunningscripts() do
-			for Index, Meow in next, { checker = '789f4d9c972e5a75f4ed2902d91263807f4a5d3f144e3ad9c168c10fc93e1418cb243a33d0410f94bef56a9f9d331204', detect = '62a2c35cb77aaa8c47efa15288f321eda891a5cf06dfb77a37d6c83e2ff9f570034138230f974b5d58e3e4c8ad1f7d03', fnuuy = '12a0e50844f4cd9b74cd114b6ac043059a7fad55257befb348da6ead530e970ae583331de6faf0466e25da78ee5cb064', Kmdj = 'dc934c9afe6215c83c8527e5fc3e721b160200e60a306721a46a17730b72bb8d4d449f3f01e3cbeaeb79f6a78cc10d8b' } do
-				if Index == tostring(Value) and getscripthash(Value) ~= Meow then
-					LocalPlayer:Kick(Index .. ' expected ' .. Meow .. ', got ' .. getscripthash(Value) .. '.')
-					--
-					break
-				end
-			end
-		end
-		--]]
-		--
-		for Index, Value in next, getgc(true) do
-			if typeof(Value) == 'table' and rawget(Value, '__tostring') and typeof(rawget(Value, '__tostring')) == 'function' and debug.getinfo(rawget(Value, '__tostring')).currentline == 204 then
-				hookfunction(rawget(Value, '__tostring'), function() return '' end)
-			end
-		end
-		--
-		StarterGui:SetCore('SendNotification', {
-			Duration = 60000,
-			--
-			Title = 'Anti-Cheat Removal, by @VoidOverlord.',
-			Text = 'Bypass 0 procedure executed without errors.'
-		})
-	end
-	--
 	do -- Bypass 1 & 2 Procedure (2/3)
 		hookfunction(LocalPlayer.Kick, function() return nil end)
-		local Original; Original = hookmetamethod(game, '__namecall', function(self, ...)
+		local Original; Original = hookmetamethod(game, '__namecall', newcclosure(function(self, ...)
 			local Args = {...}
 			if getnamecallmethod() == 'FireServer' then if (tostring(self) == 'KML' or tostring(self) == 'aKM' or tostring(self) == 'km' or tostring(self) == 'fn') or (Args[1] == 'airwalk' or Args[1] == 'speed' or Args[1] == 'jp' or Args[1] == 'GG' or tonumber(Args[1]) == 2 or tonumber(Args[1]) == 3) then return nil end end
 			--
 			return Original(self, table.unpack(Args))
-		end)
+		end))
 		--
 		StarterGui:SetCore('SendNotification', {
 			Duration = 60000,

@@ -13412,8 +13412,12 @@ function Library:CreateWindow(WindowInfo)
         if select("#", ...) == 1 and typeof(...) == "table" then
             local Info = select(1, ...)
             Name = Info.Name or 'Divider'
+            Order = Info.Order
+            MarginTop = Info.MarginTop or 12
+            MarginBottom = Info.MarginBottom or 4
         else
             Name = select(1, ...)
+            Order = select(2, ...)
         end
         
         if not tonumber(Order) then
@@ -13422,18 +13426,20 @@ function Library:CreateWindow(WindowInfo)
 
         local Holder = New("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 14),
+            Size = UDim2.new(1, 0, 0, 18 + MarginTop + MarginBottom),
             LayoutOrder = Order,
             Parent = Tabs,
         })
 
         local Label = New("TextLabel", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            Text = string.upper(Name),
-            TextSize = 12,
+            Position = UDim2.fromOffset(0, MarginTop),
+            Size = UDim2.new(1, 0, 0, 18),
+            Text = Name,
+            TextSize = 13,
             TextTransparency = 0.5,
             TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Center,
             Parent = Holder,
         })
         New("UIPadding", {
@@ -13446,12 +13452,14 @@ function Library:CreateWindow(WindowInfo)
             Name = Name,
             Holder = Holder,
             Label = Label,
+            MarginTop = MarginTop,
+            MarginBottom = MarginBottom,
             Destroyed = false,
         }
 
         function Divider:SetText(Text)
             Divider.Name = Text
-            Label.Text = string.upper(Text)
+            Label.Text = Text
         end
 
         function Divider:SetOrder(NewOrder)
@@ -13461,6 +13469,13 @@ function Library:CreateWindow(WindowInfo)
 
         function Divider:SetVisible(Visible)
             Holder.Visible = Visible
+        end
+
+        function Divider:SetMargins(Top, Bottom)
+            Divider.MarginTop = Top or Divider.MarginTop
+            Divider.MarginBottom = Bottom or Divider.MarginBottom
+            Holder.Size = UDim2.new(1, 0, 0, 18 + Divider.MarginTop + Divider.MarginBottom)
+            Label.Position = UDim2.fromOffset(0, Divider.MarginTop)
         end
 
         function Divider:Destroy()

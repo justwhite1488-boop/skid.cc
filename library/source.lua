@@ -13405,6 +13405,74 @@ function Library:CreateWindow(WindowInfo)
         return Tab
     end
 
+    function Window:AddDivider(...)
+        local Name = nil
+        local Order = nil
+
+        if select("#", ...) == 1 and typeof(...) == "table" then
+            local Info = select(1, ...)
+            Name = Info.Name or 'Divider'
+        else
+            Name = select(1, ...)
+        end
+        
+        if not tonumber(Order) then
+            Order = #Tabs:GetChildren()
+        end
+
+        local Holder = New("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 14),
+            LayoutOrder = Order,
+            Parent = Tabs,
+        })
+
+        local Label = New("TextLabel", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            Text = string.upper(Name),
+            TextSize = 12,
+            TextTransparency = 0.5,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = Holder,
+        })
+        New("UIPadding", {
+            PaddingLeft = UDim.new(0, 12),
+            PaddingRight = UDim.new(0, 12),
+            Parent = Label,
+        })
+
+        local Divider = {
+            Name = Name,
+            Holder = Holder,
+            Label = Label,
+            Destroyed = false,
+        }
+
+        function Divider:SetText(Text)
+            Divider.Name = Text
+            Label.Text = string.upper(Text)
+        end
+
+        function Divider:SetOrder(NewOrder)
+            Order = NewOrder
+            Holder.LayoutOrder = NewOrder
+        end
+
+        function Divider:SetVisible(Visible)
+            Holder.Visible = Visible
+        end
+
+        function Divider:Destroy()
+            Divider.Destroyed = true
+            if Holder then
+                Holder:Destroy()
+            end
+        end
+
+        return Divider
+    end
+
     function Window:AddDialog(Idx, Info)
         Info = Library:Validate(Info, Templates.Dialog)
 

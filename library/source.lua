@@ -13413,11 +13413,13 @@ function Library:CreateWindow(WindowInfo)
             local Info = select(1, ...)
             Name = Info.Name or 'Divider'
             Order = Info.Order
-            MarginTop = Info.MarginTop or 12
+            MarginTop = Info.MarginTop or 6
             MarginBottom = Info.MarginBottom or 4
         else
             Name = select(1, ...)
             Order = select(2, ...)
+            MarginTop = select(3, ...) or 6
+            MarginBottom = select(4, ...) or 4
         end
         
         if not tonumber(Order) then

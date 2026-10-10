@@ -30,6 +30,16 @@ end
 
 local SchemeIndexes = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
 
+local DefaultTheme = {
+    BackgroundColor = "0f0f0f",
+    MainColor = "191919",
+    AccentColor = "7d55ff",
+    OutlineColor = "282828",
+    FontColor = "ffffff",
+    FontFace = "Code",
+    BackgroundImage = "",
+}
+
 local ThemeManager = {
     Library = nil,
     AppliedToTab = false,
@@ -50,6 +60,29 @@ function ThemeManager:ThemeUpdate()
     end
 
     Library:UpdateColorsUsingRegistry()
+end
+
+function ThemeManager:ResetTheme()
+    local Library = ThemeManager.Library
+
+    for _, SchemeIndex in SchemeIndexes do
+        local Element = Library.Options[SchemeIndex]
+        if not Element then continue end
+
+        Element:SetValue(Color3.fromHex(DefaultTheme[SchemeIndex]))
+    end
+
+    local FontFace = Library.Options.FontFace
+    if FontFace then
+        FontFace:SetValue(DefaultTheme.FontFace)
+    end
+
+    local BackgroundImage = Library.Options.BackgroundImage
+    if BackgroundImage then
+        BackgroundImage:SetValue(DefaultTheme.BackgroundImage)
+    end
+
+    ThemeManager:ThemeUpdate()
 end
 
 function ThemeManager:CreateThemeManager(ThemesBox: any)
@@ -88,6 +121,16 @@ function ThemeManager:CreateThemeManager(ThemesBox: any)
         Finished = true,
         ClearTextOnFocus = false,
         ClearTextOnBlur = false,
+    })
+    
+    ThemesBox:AddButton({
+        Text = "Reset Theme",
+        DoubleClick = false,
+
+        Func = function()
+            ThemeManager:ResetTheme()
+            Lib:Notify("Reset theme.")
+        end,
     })
 
     local FontFace = Lib.Options.FontFace

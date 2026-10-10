@@ -6167,7 +6167,7 @@ do
 
         return self
     end
-
+    
     function Funcs:AddOptions(Idx, Info)
         if self.Destroyed then return nil end
 
@@ -6197,6 +6197,7 @@ do
             Changed = Info.Changed,
             Type = "Options",
             Text = Info.Text,
+            Open = false,
         }
 
         local Holder = New("TextButton", {
@@ -6234,41 +6235,31 @@ do
             HoverTween:Play()
         end))
 
-        local MenuTable
-        MenuTable = Library:AddContextMenu(
-            Holder,
-            UDim2.fromOffset(Info.Width or 220, 0),
-            function()
-                return { Holder.AbsoluteSize.X + 1.5, 0.5 }
-            end,
-            1,
-            function(Active)
-                TweenService:Create(
-                    IconImage,
-                    TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-                    { Rotation = Active and 90 or 0 }
-                ):Play()
+        local Popup = New("Frame", {
+            BackgroundColor3 = "BackgroundColor",
+            Size = UDim2.fromOffset(Info.Width or 220, 0),
+            Visible = false,
+            ZIndex = 1,
+            Parent = Library.Overlay,
+        })
+        table.insert(Library.Scales, New("UIScale", { Parent = Popup }))
 
-                if Active then
-                    task.defer(function()
-                        if not OptionsAddon.Destroyed then
-                            OptionsAddon:Resize()
-                        end
-                    end)
-                end
-            end,
-            false,
-            "no_top_left",
-            "Dropdown"
-        )
+        New("UIStroke", {
+            Color = "OutlineColor",
+            Parent = Popup,
+        })
 
-        MenuTable.List.Padding = UDim.new(0, 0)
+        local PopupCorner = New("UICorner", {
+            CornerRadius = UDim.new(0, Library.CornerRadius / 2),
+            Parent = Popup,
+        })
+        table.insert(Library.Corners, PopupCorner)
 
         local Container = New("Frame", {
             BackgroundTransparency = 1,
             AutomaticSize = Enum.AutomaticSize.Y,
             Size = UDim2.fromScale(1, 0),
-            Parent = MenuTable.Menu,
+            Parent = Popup,
         })
         New("UIListLayout", {
             Padding = UDim.new(0, 8),
@@ -6282,7 +6273,20 @@ do
             Parent = Container,
         })
 
-        OptionsAddon.Menu = MenuTable
+        OptionsAddon.Menu = {
+            Menu = Popup,
+            List = Container.UIListLayout,
+            Active = false,
+            SetSize = function(_, Size)
+                local W = if typeof(Size) == "function" then Size().X.Offset else Size.X.Offset
+                Popup.Size = UDim2.fromOffset(W or Info.Width or 220, Popup.Size.Y.Offset)
+            end,
+            Open = function() end,
+            Close = function() end,
+            Toggle = function() end,
+            Destroy = function() end,
+        }
+
         OptionsAddon.Container = Container
         OptionsAddon.BoxHolder = Container
 
@@ -6294,25 +6298,100 @@ do
             DependencyGroupboxes = {},
         }
 
+        local function UpdatePosition()
+            Popup.Position = UDim2.fromOffset(
+                math.floor(Holder.AbsolutePosition.X + Holder.AbsoluteSize.X + 2),
+                math.floor(Holder.AbsolutePosition.Y)
+            )
+        end
+
         function OptionsAddon:Resize()
             local Height = (Container.UIListLayout.AbsoluteContentSize.Y / Library.DPIScale) + 14
-            MenuTable:SetSize(UDim2.fromOffset(Info.Width or 220, Height))
+            Popup.Size = UDim2.fromOffset(Info.Width or 220, Height)
         end
 
         table.insert(OptionsAddon.Connections, Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if OptionsAddon.Destroyed then return end
+            if OptionsAddon.Destroyed or not OptionsAddon.Open then return end
             OptionsAddon:Resize()
         end))
 
+        table.insert(OptionsAddon.Connections, Holder:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+            if OptionsAddon.Open then
+                UpdatePosition()
+            end
+        end))
+
+        local function OpenPopup()
+            if OptionsAddon.Open or OptionsAddon.Destroyed then return end
+            OptionsAddon.Open = true
+            OptionsAddon.Menu.Active = true
+
+            UpdatePosition()
+            Popup.Visible = true
+            OptionsAddon:Resize()
+
+            TweenService:Create(
+                IconImage,
+                TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                { Rotation = 90 }
+            ):Play()
+        end
+
+        local function ClosePopup()
+            if not OptionsAddon.Open then return end
+            OptionsAddon.Open = false
+            OptionsAddon.Menu.Active = false
+
+            Popup.Visible = false
+
+            TweenService:Create(
+                IconImage,
+                TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                { Rotation = 0 }
+            ):Play()
+        end
+
+        OptionsAddon.Menu.Open = OpenPopup
+        OptionsAddon.Menu.Close = ClosePopup
+        OptionsAddon.Menu.Toggle = function()
+            if OptionsAddon.Open then ClosePopup() else OpenPopup() end
+        end
+
+        function OptionsAddon:Toggle()
+            OptionsAddon.Menu.Toggle()
+        end
+
         table.insert(OptionsAddon.Connections, Holder.MouseButton1Click:Connect(function()
             if ParentObj.Disabled then return end
-            MenuTable:Toggle()
+            OptionsAddon.Menu.Toggle()
             Library:SafeCallback(Info.Callback, OptionsAddon)
+        end))
+
+        Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input)
+            if Library.Unloaded or OptionsAddon.Destroyed or not OptionsAddon.Open then return end
+            if not IsClickInput(Input, true) then return end
+
+            local Pos = Input.Position
+
+            if Library:MouseIsOverFrame(Popup, Pos) then return end
+            if Library:MouseIsOverFrame(Holder, Pos) then return end
+
+            for _, Menu in Library.ContextMenus do
+                if Menu.Active and Menu.Menu and Library:MouseIsOverFrame(Menu.Menu, Pos) then
+                    return
+                end
+            end
+
+            ClosePopup()
         end))
 
         function OptionsAddon:UpdateColors()
             if Library.Unloaded then return end
             IconImage.ImageTransparency = ParentObj.Disabled and 0.8 or 0.4
+
+            if ParentObj.Disabled and OptionsAddon.Open then
+                ClosePopup()
+            end
         end
 
         function OptionsAddon:SetIcon(NewIcon)
@@ -6352,7 +6431,7 @@ do
                 end
             end
 
-            if MenuTable then MenuTable:Destroy() end
+            if Popup then Popup:Destroy() end
             if Holder then Holder:Destroy() end
 
             if ParentObj and ParentObj.Addons then

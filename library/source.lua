@@ -6200,7 +6200,7 @@ do
             Changed = Info.Changed,
             Type = "Options",
             Text = Info.Text,
-            Open = false,
+            IsOpen = false,
             OpenedAt = nil,
         }
 
@@ -6293,20 +6293,6 @@ do
             DependencyGroupboxes = {},
         }
 
-        OptionsAddon.Menu = {
-            Menu = Popup,
-            List = Container.UIListLayout,
-            Active = false,
-            SetSize = function(_, Size)
-                local W = if typeof(Size) == "function" then Size().X.Offset else Size.X.Offset
-                Popup.Size = UDim2.fromOffset(W or Info.Width or 220, Popup.Size.Y.Offset)
-            end,
-            Open = function() OptionsAddon:Open() end,
-            Close = function() OptionsAddon:Close() end,
-            Toggle = function() OptionsAddon:Toggle() end,
-            Destroy = function() end,
-        }
-
         local function UpdatePosition()
             Popup.Position = UDim2.fromOffset(
                 math.floor(Holder.AbsolutePosition.X + Holder.AbsoluteSize.X + 2),
@@ -6314,34 +6300,23 @@ do
             )
         end
 
-        function OptionsAddon:Resize()
+        local function ResizePopup()
             local Height = (Container.UIListLayout.AbsoluteContentSize.Y / Library.DPIScale) + 14
             Popup.Size = UDim2.fromOffset(Info.Width or 220, Height)
         end
 
-        table.insert(OptionsAddon.Connections, Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if OptionsAddon.Destroyed or not OptionsAddon.Open then return end
-            OptionsAddon:Resize()
-        end))
+        local function OpenPopup()
+            if OptionsAddon.IsOpen or OptionsAddon.Destroyed then return end
 
-        table.insert(OptionsAddon.Connections, Holder:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
-            if OptionsAddon.Open then
-                UpdatePosition()
-            end
-        end))
-
-        function OptionsAddon:Open()
-            if self.Open or self.Destroyed then return end
-
-            self.Open = true
-            self.Menu.Active = true
+            OptionsAddon.IsOpen = true
+            OptionsAddon.Menu.Active = true
 
             Library.OptionsOpenCounter = Library.OptionsOpenCounter + 1
-            self.OpenedAt = Library.OptionsOpenCounter
+            OptionsAddon.OpenedAt = Library.OptionsOpenCounter
 
             UpdatePosition()
             Popup.Visible = true
-            self:Resize()
+            ResizePopup()
 
             TweenService:Create(
                 IconImage,
@@ -6350,12 +6325,12 @@ do
             ):Play()
         end
 
-        function OptionsAddon:Close()
-            if not self.Open then return end
+        local function ClosePopup()
+            if not OptionsAddon.IsOpen then return end
 
-            self.Open = false
-            self.Menu.Active = false
-            self.OpenedAt = nil
+            OptionsAddon.IsOpen = false
+            OptionsAddon.Menu.Active = false
+            OptionsAddon.OpenedAt = nil
             Popup.Visible = false
 
             TweenService:Create(
@@ -6365,18 +6340,47 @@ do
             ):Play()
         end
 
-        function OptionsAddon:Toggle()
-            if self.Open then self:Close() else self:Open() end
+        local function TogglePopup()
+            if OptionsAddon.IsOpen then ClosePopup() else OpenPopup() end
         end
+
+        OptionsAddon.Open = OpenPopup
+        OptionsAddon.Close = ClosePopup
+        OptionsAddon.Toggle = TogglePopup
+
+        OptionsAddon.Menu = {
+            Menu = Popup,
+            List = Container.UIListLayout,
+            Active = false,
+            SetSize = function(_, Size)
+                local W = if typeof(Size) == "function" then Size().X.Offset else Size.X.Offset
+                Popup.Size = UDim2.fromOffset(W or Info.Width or 220, Popup.Size.Y.Offset)
+            end,
+            Open = OpenPopup,
+            Close = ClosePopup,
+            Toggle = TogglePopup,
+            Destroy = function() end,
+        }
+
+        table.insert(OptionsAddon.Connections, Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if OptionsAddon.Destroyed or not OptionsAddon.IsOpen then return end
+            ResizePopup()
+        end))
+
+        table.insert(OptionsAddon.Connections, Holder:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+            if OptionsAddon.IsOpen then
+                UpdatePosition()
+            end
+        end))
 
         table.insert(OptionsAddon.Connections, Holder.MouseButton1Click:Connect(function()
             if ParentObj.Disabled then return end
-            OptionsAddon:Toggle()
+            TogglePopup()
             Library:SafeCallback(Info.Callback, OptionsAddon)
         end))
 
         Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input)
-            if Library.Unloaded or OptionsAddon.Destroyed or not OptionsAddon.Open then return end
+            if Library.Unloaded or OptionsAddon.Destroyed or not OptionsAddon.IsOpen then return end
             if not IsClickInput(Input, true) then return end
 
             local Pos = Input.Position
@@ -6385,7 +6389,7 @@ do
                 local MyOpenedAt = OptionsAddon.OpenedAt
                 if MyOpenedAt then
                     for _, Other in Library.ActiveOptionsPopups do
-                        if Other ~= OptionsAddon and Other.Open and Other.OpenedAt and Other.OpenedAt > MyOpenedAt then
+                        if Other ~= OptionsAddon and Other.IsOpen and Other.OpenedAt and Other.OpenedAt > MyOpenedAt then
                             Other:Close()
                         end
                     end
@@ -6399,7 +6403,7 @@ do
 
             for _, Other in Library.ActiveOptionsPopups do
                 if Other.Destroyed or Other == OptionsAddon then continue end
-                if Other.Popup and Other.Open and Library:MouseIsOverFrame(Other.Popup, Pos) then
+                if Other.Popup and Other.IsOpen and Library:MouseIsOverFrame(Other.Popup, Pos) then
                     return
                 end
                 if Other.Holder and Library:MouseIsOverFrame(Other.Holder, Pos) then
@@ -6416,13 +6420,13 @@ do
                 end
             end
 
-            OptionsAddon:Close()
+            ClosePopup()
         end))
 
         table.insert(OptionsAddon.Connections, RunService.RenderStepped:Connect(function()
             if OptionsAddon.Destroyed then return end
-            if OptionsAddon.Open and not Library.Toggled then
-                OptionsAddon:Close()
+            if OptionsAddon.IsOpen and not Library.Toggled then
+                ClosePopup()
             end
         end))
 
@@ -6430,8 +6434,8 @@ do
             if Library.Unloaded then return end
             IconImage.ImageTransparency = ParentObj.Disabled and 0.8 or 0.4
 
-            if ParentObj.Disabled and OptionsAddon.Open then
-                OptionsAddon:Close()
+            if ParentObj.Disabled and OptionsAddon.IsOpen then
+                ClosePopup()
             end
         end
 
@@ -6446,7 +6450,7 @@ do
         function OptionsAddon:SetWidth(Width)
             assert(typeof(Width) == "number" and Width > 0, "Width must be a positive number")
             Info.Width = Width
-            OptionsAddon:Resize()
+            ResizePopup()
         end
 
         function OptionsAddon:Destroy()

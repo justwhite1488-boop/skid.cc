@@ -65,11 +65,15 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         return Lib.Options[SchemeIndex]
     end
 
+    Themesbox:AddDivider("Colors")
+
     CreateColorOption("Background Color", "BackgroundColor")
-    CreateColorOption("Outline Color", "OutlineColor")
-    CreateColorOption("Accent Color", "AccentColor")
     CreateColorOption("Main Color", "MainColor")
+    CreateColorOption("Accent Color", "AccentColor")
+    CreateColorOption("Outline Color", "OutlineColor")
     CreateColorOption("Font Color", "FontColor")
+
+    Themesbox:AddDivider("Font")
 
     Themesbox:AddDropdown("FontFace", {
         Text = "Font Face",
@@ -77,6 +81,8 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         Values = { "BuilderSans", "Code", "Fantasy", "Gotham", "Jura", "Roboto", "RobotoMono", "SourceSans" },
         Multi = false,
     })
+
+    Themesbox:AddDivider("Background")
 
     Themesbox:AddInput("BackgroundImage", {
         Text = "Background Image",
@@ -106,15 +112,16 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
     return Themesbox
 end
 
-function ThemeManager:CreateGroupBox(Tab: any)
+function ThemeManager:CreateGroupBox(Tab: any, IconName: string)
     return Tab:AddGroupbox({
         Side = "Left",
         Name = "Themes",
+        IconName = IconName or "paintbrush",
     })
 end
 
-function ThemeManager:ApplyToTab(Tab: any)
-    local Groupbox = ThemeManager:CreateGroupBox(Tab)
+function ThemeManager:ApplyToTab(Tab: any, IconName: string)
+    local Groupbox = ThemeManager:CreateGroupBox(Tab, IconName)
     return ThemeManager:CreateThemeManager(Groupbox)
 end
 

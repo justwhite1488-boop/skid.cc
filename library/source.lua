@@ -6309,9 +6309,8 @@ do
             if OptionsAddon.IsOpen or OptionsAddon.Destroyed then return end
 
             OptionsAddon.IsOpen = true
-            OptionsAddon.Menu.Active = true
 
-            Library.OptionsOpenCounter = Library.OptionsOpenCounter + 1
+            Library.OptionsOpenCounter += 1
             OptionsAddon.OpenedAt = Library.OptionsOpenCounter
 
             UpdatePosition()
@@ -6329,7 +6328,6 @@ do
             if not OptionsAddon.IsOpen then return end
 
             OptionsAddon.IsOpen = false
-            OptionsAddon.Menu.Active = false
             OptionsAddon.OpenedAt = nil
             Popup.Visible = false
 
@@ -6340,29 +6338,31 @@ do
             ):Play()
         end
 
-        function OptionsAddon:Resize()
-            ResizePopup()
+        local function TogglePopup()
+            if OptionsAddon.IsOpen then
+                ClosePopup()
+            else
+                OpenPopup()
+            end
         end
 
+        function OptionsAddon:Open() OpenPopup() end
+        function OptionsAddon:Close() ClosePopup() end
+        function OptionsAddon:Toggle() TogglePopup() end
+        function OptionsAddon:Resize() ResizePopup() end
         function OptionsAddon:RefreshSides() end
         function OptionsAddon:UpdateCorners() end
-
-        local function TogglePopup()
-            if OptionsAddon.IsOpen then ClosePopup() else OpenPopup() end
-        end
-
-        OptionsAddon.Open = OpenPopup
-        OptionsAddon.Close = ClosePopup
-        OptionsAddon.Toggle = TogglePopup
 
         OptionsAddon.Menu = {
             Menu = Popup,
             List = Container.UIListLayout,
             Active = false,
+
             SetSize = function(_, Size)
                 local W = if typeof(Size) == "function" then Size().X.Offset else Size.X.Offset
                 Popup.Size = UDim2.fromOffset(W or Info.Width or 220, Popup.Size.Y.Offset)
             end,
+
             Open = OpenPopup,
             Close = ClosePopup,
             Toggle = TogglePopup,

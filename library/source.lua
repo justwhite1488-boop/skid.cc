@@ -4048,7 +4048,7 @@ function Library:OnUnload(Callback)
     table.insert(Library.UnloadSignals, Callback)
 end
 
-local BaseAddons = {}
+local BaseGroupbox, BaseAddons = nil, {}
 do
     local Funcs = {}
 
@@ -6168,13 +6168,222 @@ do
         return self
     end
 
+    function Funcs:AddOptions(Idx, Info)
+        if self.Destroyed then return nil end
+
+        Info = Library:Validate(Info, {
+            Text = "Options",
+            Icon = "cog",
+            Width = 220,
+            Callback = function() end,
+            Changed = function() end,
+        })
+
+        local ParentObj = self
+        local ToggleLabel = ParentObj.TextLabel
+
+        if ParentObj.Type == "Button" or ParentObj.Type == "SubButton" then
+            ToggleLabel = ParentObj.Base
+        end
+
+        local OptionsAddon = {
+            Connections = {},
+            Destroyed = false,
+            Elements = {},
+            DependencyBoxes = {},
+            Tabboxes = {},
+            Value = {},
+            Callback = Info.Callback,
+            Changed = Info.Changed,
+            Type = "Options",
+            Text = Info.Text,
+        }
+
+        local Holder = New("TextButton", {
+            BackgroundTransparency = 1,
+            Size = UDim2.fromOffset(18, 18),
+            Text = "",
+            Parent = ToggleLabel,
+        })
+
+        local IconImage = New("ImageLabel", {
+            BackgroundTransparency = 1,
+            ImageColor3 = "FontColor",
+            ImageTransparency = 0.4,
+            Size = UDim2.fromScale(1, 1),
+            Parent = Holder,
+        })
+
+        local CogIcon = Library:GetCustomIcon(Info.Icon or "cog")
+        if CogIcon then
+            Library:ApplyLucideIcon(IconImage, CogIcon)
+        end
+
+        local HoverTween
+
+        table.insert(OptionsAddon.Connections, Holder.MouseEnter:Connect(function()
+            if ParentObj.Disabled then return end
+            if HoverTween then HoverTween:Cancel() end
+            HoverTween = TweenService:Create(IconImage, Library.TweenInfo, { ImageTransparency = 0 })
+            HoverTween:Play()
+        end))
+
+        table.insert(OptionsAddon.Connections, Holder.MouseLeave:Connect(function()
+            if HoverTween then HoverTween:Cancel() end
+            HoverTween = TweenService:Create(IconImage, Library.TweenInfo, { ImageTransparency = 0.4 })
+            HoverTween:Play()
+        end))
+
+        local MenuTable
+        MenuTable = Library:AddContextMenu(
+            Holder,
+            UDim2.fromOffset(Info.Width or 220, 0),
+            function()
+                return { Holder.AbsoluteSize.X + 1.5, 0.5 }
+            end,
+            1,
+            function(Active)
+                TweenService:Create(
+                    IconImage,
+                    TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                    { Rotation = Active and 90 or 0 }
+                ):Play()
+
+                if Active then
+                    task.defer(function()
+                        if not OptionsAddon.Destroyed then
+                            OptionsAddon:Resize()
+                        end
+                    end)
+                end
+            end,
+            false,
+            "no_top_left",
+            "Dropdown"
+        )
+
+        MenuTable.List.Padding = UDim.new(0, 0)
+
+        local Container = New("Frame", {
+            BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y,
+            Size = UDim2.fromScale(1, 0),
+            Parent = MenuTable.Menu,
+        })
+        New("UIListLayout", {
+            Padding = UDim.new(0, 8),
+            Parent = Container,
+        })
+        New("UIPadding", {
+            PaddingBottom = UDim.new(0, 7),
+            PaddingLeft = UDim.new(0, 7),
+            PaddingRight = UDim.new(0, 7),
+            PaddingTop = UDim.new(0, 7),
+            Parent = Container,
+        })
+
+        OptionsAddon.Menu = MenuTable
+        OptionsAddon.Container = Container
+        OptionsAddon.BoxHolder = Container
+
+        OptionsAddon.Tab = {
+            Sides = {},
+            Elements = {},
+            DependencyBoxes = {},
+            Tabboxes = {},
+            DependencyGroupboxes = {},
+        }
+
+        function OptionsAddon:Resize()
+            local Height = (Container.UIListLayout.AbsoluteContentSize.Y / Library.DPIScale) + 14
+            MenuTable:SetSize(UDim2.fromOffset(Info.Width or 220, Height))
+        end
+
+        table.insert(OptionsAddon.Connections, Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if OptionsAddon.Destroyed then return end
+            OptionsAddon:Resize()
+        end))
+
+        table.insert(OptionsAddon.Connections, Holder.MouseButton1Click:Connect(function()
+            if ParentObj.Disabled then return end
+            MenuTable:Toggle()
+            Library:SafeCallback(Info.Callback, OptionsAddon)
+        end))
+
+        function OptionsAddon:UpdateColors()
+            if Library.Unloaded then return end
+            IconImage.ImageTransparency = ParentObj.Disabled and 0.8 or 0.4
+        end
+
+        function OptionsAddon:SetIcon(NewIcon)
+            Info.Icon = NewIcon
+            local CustomIcon = Library:GetCustomIcon(NewIcon)
+            if CustomIcon then
+                Library:ApplyLucideIcon(IconImage, CustomIcon)
+            end
+        end
+
+        function OptionsAddon:SetWidth(Width)
+            assert(typeof(Width) == "number" and Width > 0, "Width must be a positive number")
+            Info.Width = Width
+            OptionsAddon:Resize()
+        end
+
+        function OptionsAddon:Destroy()
+            OptionsAddon.Destroyed = true
+
+            if OptionsAddon.Connections then
+                for _, Connection in OptionsAddon.Connections do
+                    Connection:Disconnect()
+                end
+            end
+
+            for Index = #OptionsAddon.Elements, 1, -1 do
+                local Element = table.remove(OptionsAddon.Elements, Index)
+                if Element and Element.Destroy then
+                    Element:Destroy()
+                end
+            end
+
+            for Index = #OptionsAddon.DependencyBoxes, 1, -1 do
+                local Depbox = table.remove(OptionsAddon.DependencyBoxes, Index)
+                if Depbox and Depbox.Destroy then
+                    Depbox:Destroy()
+                end
+            end
+
+            if MenuTable then MenuTable:Destroy() end
+            if Holder then Holder:Destroy() end
+
+            if ParentObj and ParentObj.Addons then
+                local AddonIdx = table.find(ParentObj.Addons, OptionsAddon)
+                if AddonIdx then
+                    table.remove(ParentObj.Addons, AddonIdx)
+                end
+            end
+
+            Options[Idx] = nil
+        end
+
+        if not ParentObj.Addons then
+            ParentObj.Addons = {}
+        end
+
+        table.insert(ParentObj.Addons, OptionsAddon)
+        setmetatable(OptionsAddon, BaseGroupbox)
+
+        Options[Idx] = OptionsAddon
+
+        return OptionsAddon
+    end
+
     BaseAddons.__index = Funcs
     BaseAddons.__namecall = function(_, Key, ...)
         return Funcs[Key](...)
     end
 end
 
-local BaseGroupbox = {}
+BaseGroupbox = {}
 do
     local Funcs = {}
 

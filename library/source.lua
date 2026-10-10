@@ -6340,6 +6340,13 @@ do
             ):Play()
         end
 
+        function OptionsAddon:Resize()
+            ResizePopup()
+        end
+
+        function OptionsAddon:RefreshSides() end
+        function OptionsAddon:UpdateCorners() end
+
         local function TogglePopup()
             if OptionsAddon.IsOpen then ClosePopup() else OpenPopup() end
         end

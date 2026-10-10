@@ -52,39 +52,37 @@ function ThemeManager:ThemeUpdate()
     Library:UpdateColorsUsingRegistry()
 end
 
-function ThemeManager:CreateThemeManager(Themesbox: any)
+function ThemeManager:CreateThemeManager(ThemesBox: any)
     assert(ThemeManager.Library, "Library is not set, call ThemeManager:SetLibrary(Library) first.")
 
     local Lib = ThemeManager.Library
 
     local function CreateColorOption(Text, SchemeIndex)
-        Themesbox:AddLabel(Text):AddColorPicker(SchemeIndex, {
+        ThemesBox:AddLabel(Text):AddColorPicker(SchemeIndex, {
             Default = Lib.Scheme[SchemeIndex]
         })
 
         return Lib.Options[SchemeIndex]
     end
 
-    Themesbox:AddDivider("Colors")
-
     CreateColorOption("Background Color", "BackgroundColor")
     CreateColorOption("Main Color", "MainColor")
     CreateColorOption("Accent Color", "AccentColor")
     CreateColorOption("Outline Color", "OutlineColor")
+
+    ThemesBox:AddDivider()
+
     CreateColorOption("Font Color", "FontColor")
-
-    Themesbox:AddDivider("Font")
-
-    Themesbox:AddDropdown("FontFace", {
+    ThemesBox:AddDropdown("FontFace", {
         Text = "Font Face",
         Default = "Code",
         Values = { "BuilderSans", "Code", "Fantasy", "Gotham", "Jura", "Roboto", "RobotoMono", "SourceSans" },
         Multi = false,
     })
 
-    Themesbox:AddDivider("Background")
+    ThemesBox:AddDivider()
 
-    Themesbox:AddInput("BackgroundImage", {
+    ThemesBox:AddInput("BackgroundImage", {
         Text = "Background Image",
         Default = "",
         Finished = true,
@@ -109,19 +107,18 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
 
     ThemeManager.AppliedToTab = true
 
-    return Themesbox
+    return ThemesBox
 end
 
-function ThemeManager:CreateGroupBox(Tab: any, IconName: string)
+function ThemeManager:CreateGroupBox(Tab: any)
     return Tab:AddGroupbox({
         Side = "Left",
         Name = "Themes",
-        IconName = IconName or "paintbrush",
     })
 end
 
-function ThemeManager:ApplyToTab(Tab: any, IconName: string)
-    local Groupbox = ThemeManager:CreateGroupBox(Tab, IconName)
+function ThemeManager:ApplyToTab(Tab: any)
+    local Groupbox = ThemeManager:CreateGroupBox(Tab)
     return ThemeManager:CreateThemeManager(Groupbox)
 end
 
